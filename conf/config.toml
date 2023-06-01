@@ -1,0 +1,19 @@
+# 如：总数据20亿次，每次串行删除2000万（per_total_count）条；
+# 2000万条数据，一次删除5万（batch_count）条；
+# 开启20个goroutine并发删除5万数据
+
+# 每次串行删除的数量,
+per_total_count = 10000
+# 每批删除命令一次删除条数
+batch_count= 2000
+# 并发协程数
+go_count=10
+# 每删除一批数据，间隔多少秒删除下一批
+interval_time=2
+[logger]
+env="prod"
+level="debug"
+output = "log.txt"
+[database]
+judgery_dsn="mysql://root:123456@tcp(localhost:3306)/yt_judgery_prod?parseTime=True"
+data_report_enable=true

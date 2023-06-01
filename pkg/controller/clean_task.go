@@ -45,7 +45,7 @@ func (c *CleanTask) CleanDataTask(date string) error {
 	defer pool.Release()
 	wg := &sync.WaitGroup{}
 	//判断配置文件如果所有表都未开启，则不进行后续操作
-	if !conf.C.Database.DataReportEnable {
+	if !conf.C.Database.DataReportEnable && !conf.C.Database.HealthReportEnable {
 		c.logger.Info("未删除任何数据，需开启相应的表配置项")
 		return nil
 	}
@@ -54,6 +54,11 @@ func (c *CleanTask) CleanDataTask(date string) error {
 		wg.Add(1)
 		c.logger.Info("data_report表配置项data_report_enable已开启")
 		go c.CleanDataReportDataTask(wg, now, pool)
+	}
+	if conf.C.Database.HealthReportEnable {
+		wg.Add(1)
+		c.logger.Info("health_report表配置项health_report_enable已开启")
+		go c.CleanHealthReportDataTask(wg, now, pool)
 	}
 	wg.Wait()
 	c.logger.Info("删除完成")
@@ -72,4 +77,18 @@ func (c *CleanTask) CleanDataReportDataTask(wg *sync.WaitGroup, now time.Time, p
 	}
 	c.logger.Info(fmt.Sprintf("清理data_report耗时%v", time.Since(sinceNow)))
 	c.logger.Info("清理data_report完成")
+}
+
+func (c *CleanTask) CleanHealthReportDataTask(wg *sync.WaitGroup, now time.Time, pool *ants.Pool) {
+	defer panichandler.ZapHandler(zap.L()).Handle()
+	defer wg.Done()
+	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	controller := NewHealthReportController(gormx.JudgeryDB, now)
+	sinceNow := time.Now()
+	if err := controller.DeleteHealthReportController(pool); err != nil {
+		c.logger.Error("delete health_report err ", zap.Error(err))
+		return
+	}
+	c.logger.Info(fmt.Sprintf("清理health_report耗时%v", time.Since(sinceNow)))
+	c.logger.Info("清理health_report完成")
 }

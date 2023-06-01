@@ -17,3 +17,4 @@ output = "log.txt"
 [database]
 judgery_dsn="mysql://root:123456@tcp(localhost:3306)/yt_judgery_prod?parseTime=True"
 data_report_enable=true
+health_report_enable=true
